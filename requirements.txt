@@ -1,0 +1,5 @@
+pandas
+numpy
+mne
+mne-bids
+h5py

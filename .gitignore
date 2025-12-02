@@ -184,6 +184,39 @@ cython_debug/
 
 .DS_Store
 
-# dataset files
+# Datasets & Neuroimaging Files
+# Raw fNIRS/EEG data
 *.snirf
+*.nir
+*.nirs
+*.eeg
+*.edf
+*.bdf
+*.set
+*.fdt
+
+# BIDS Sidecar & Metadata (if generated locally and not tracked)
+*_optodes.tsv
+*_coordsystem.json
+*_channels.tsv
+*_events.tsv
+
+# Python/Pandas Data
 *.csv
+*.tsv
+*.json
+*.pickle
+*.pkl
+*.npy
+*.npz
+*.h5
+*.hdf5
+
+# Compression
+*.zip
+*.tar
+*.gz
+
+# Specific Folders
+dataset/
+bids_dataset/
