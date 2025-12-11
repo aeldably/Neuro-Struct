@@ -3,3 +3,6 @@ numpy
 mne
 mne-bids
 h5py
+jupyter
+mne-nirs
+tqdm
