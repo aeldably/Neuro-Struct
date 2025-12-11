@@ -147,7 +147,7 @@ def iter_dyads(bids_root: Path,
         session_paths = sorted(sub_folder.glob("ses-*"))
         sessions = [p.name.split("-")[-1] for p in session_paths if p.is_dir()]
 
-        # 3. For each session, try to load the PAIR
+        # For each session, try to load the PAIR
         for ses in sessions:
             pair_data = load_dyad_pair(
                 bids_root,
