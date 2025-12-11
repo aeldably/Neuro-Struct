@@ -65,3 +65,27 @@ def load_dyad_mapping(csv_path: Path) -> Dict[str, str]:
     except Exception as e:
         print(f"❌ Error reading Dyad CSV: {e}")
         return {}
+
+def load_dyad_grouping(csv_path: Path) -> Dict[str, list]:
+    """
+    Returns a dictionary mapping Dyad ID to a list of Subject IDs.
+    Example: {'1001': ['101', '102'], '1002': ['103', '104']}
+    """
+    if not csv_path.exists(): return {}
+
+    try:
+        df = pd.read_csv(csv_path, dtype=str)
+        grouping = {}
+
+        for _, row in df.iterrows():
+            dyad_id = str(row['dyadID'])
+            # Extract both participants, remove potential NaNs, normalize IDs
+            subs = [row['pID1'], row['pID2']]
+            clean_subs = [str(int(s)) for s in subs if pd.notna(s)]
+
+            grouping[dyad_id] = clean_subs
+
+        return grouping
+    except Exception as e:
+        print(f"❌ Error reading Dyad CSV: {e}")
+        return {}
