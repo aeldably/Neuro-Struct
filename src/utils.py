@@ -8,27 +8,59 @@ from mne_bids import make_dataset_description
 
 def parse_filename(filename: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     """
-    Extracts Subject, Session, and Run IDs from a filename using regex.
+    Extracts Subject, Session, and Run IDs from a filename.
+    Ensures EVERY file has a run number for consistency.
 
-    It enforces a strict structure: if 'sub' or 'ses' tags are missing,
-    it returns None to signal that the file should be skipped.
-    It also handles leading zero normalization (e.g., 'ses-1' -> '01').
+    Logic:
+    1. 'session-a_1' -> ses-01, run-01
+    2. 'session-b_1' -> ses-01, run-02
+    3. 'ses-01'      -> ses-01, run-01 (Default)
     """
-    # Case-insensitive matching for flexible naming (sub-01, SUB-01)
+
+    # 1. SPECIAL CASE: Handle the "session-a" / "session-b" format
+    # Regex: session-([a-z]) matches the 'a' or 'b'
+    #        _(\d+)          matches the session number
+    split_match = re.search(r"session-([a-z])_(\d+)", filename, re.IGNORECASE)
+
+    if split_match:
+        # Extract Subject (standard regex)
+        sub_match = re.search(r"sub-?(\d+)", filename, re.IGNORECASE)
+        if not sub_match: return None, None, None
+
+        sub = sub_match.group(1)
+
+        # Extract Session (the number at the end)
+        raw_ses = split_match.group(2)
+        ses = f"{int(raw_ses):02d}"
+
+        # Extract Run (convert letter to number)
+        run_char = split_match.group(1).lower()
+        run_num = ord(run_char) - 96  # 'a'=1, 'b'=2
+        run = f"{run_num:02d}"
+
+        return sub, ses, run
+
+    # 2. STANDARD CASE: Standard BIDS format
     sub_match = re.search(r"sub-?(\d+)", filename, re.IGNORECASE)
     ses_match = re.search(r"(?:ses|session)-?(\d+)", filename, re.IGNORECASE)
-    run_match = re.search(r"run-?(\d+)", filename, re.IGNORECASE)
 
-    # Mandatory fields: Subject and Session are required for BIDS
-    if not sub_match: return None, None, None
-    if not ses_match: return sub_match.group(1), None, None
+    if sub_match and ses_match:
+        sub = sub_match.group(1)
+        ses = f"{int(ses_match.group(1)):02d}"
 
-    # Normalization: Ensure standard BIDS formatting (e.g., two digits for session)
-    sub = sub_match.group(1)
-    ses = f"{int(ses_match.group(1)):02d}"
-    run = f"{int(run_match.group(1)):02d}" if run_match else None
+        # Check if an explicit run number already exists
+        run_match = re.search(r"run-?(\d+)", filename, re.IGNORECASE)
 
-    return sub, ses, run
+        if run_match:
+            run = f"{int(run_match.group(1)):02d}"
+        else:
+            # FORCE CONSISTENCY: If no run is specified, default to '01'
+            run = "01"
+
+        return sub, ses, run
+
+    # If nothing matched
+    return None, None, None
 
 
 def patch_nirs_coords(bids_root: Path):
