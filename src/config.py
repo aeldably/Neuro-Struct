@@ -31,7 +31,7 @@ def resolve_path(path_str: str) -> Path:
     Resolves file paths from the config JSON.
 
     If the path is absolute (e.g. /Users/name/...), it uses it as is.
-    If relative (e.g. "dataset"), it anchors it to the PROJ_ROOT
+    If relative (e.g. "fNIRSDataset"), it anchors it to the PROJ_ROOT
     to ensure portability across different machines.
     """
     path = Path(path_str)

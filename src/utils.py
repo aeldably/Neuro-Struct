@@ -90,7 +90,7 @@ def generate_description(bids_root: Path, config: dict):
     Writes the mandatory 'dataset_description.json' file to the BIDS root.
 
     Uses values from the study_config.json to populate fields like Study Name,
-    Authors, and License. This ensures the dataset top-level metadata is correct.
+    Authors, and License. This ensures the fNIRSDataset top-level metadata is correct.
     """
     make_dataset_description(
         path=bids_root,

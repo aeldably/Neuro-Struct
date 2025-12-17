@@ -24,7 +24,7 @@ def main():
        - Write BIDS data using MNE-BIDS (silencing internal logs).
        - Patch 'Age' metadata into the participants.tsv (on-disk).
        - Log Success/Failure explicitly for every file.
-    4. Generate final dataset description and apply sidecar hot-fixes.
+    4. Generate final fNIRSDataset description and apply sidecar hot-fixes.
     """
 
     try:
@@ -35,7 +35,7 @@ def main():
 
     # Resolve input/output directories relative to the project root.
     paths_config = study_config.get("Paths", {})
-    source_dir = cfg.resolve_path(paths_config.get("SourceDir", "dataset"))
+    source_dir = cfg.resolve_path(paths_config.get("SourceDir", "fNIRSDataset"))
     bids_root = cfg.resolve_path(paths_config.get("BidsRoot", "bids_dataset"))
 
     if not source_dir.exists():

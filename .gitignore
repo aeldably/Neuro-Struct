@@ -218,5 +218,5 @@ cython_debug/
 *.gz
 
 # Specific Folders
-dataset/
-bids_dataset/
+fNIRSDataset/
+BrainImaging/

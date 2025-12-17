@@ -10,7 +10,7 @@ from typing import Tuple, Generator, List, Optional, Dict
 def iter_dataset(bids_root: Path, task_name: str, datatype="nirs") -> Generator[
     Tuple[str, str, mne.io.Raw], None, None]:
     """
-    Loops over the whole .SNIRF files, and yields every single file in the dataset, one by one.
+    Loops over the whole .SNIRF files, and yields every single file in the fNIRSDataset, one by one.
     """
     subjects = sorted(get_entity_vals(bids_root, 'subject'))
 
@@ -128,7 +128,7 @@ def iter_dyads(bids_root: Path,
                grouping_map: Dict[str, List[str]],
                task_name: str) -> Generator[Tuple[str, str, mne.io.Raw, mne.io.Raw], None, None]:
     """
-    Yields matched pairs for every Dyad in the dataset.
+    Yields matched pairs for every Dyad in the fNIRSDataset.
 
     Usage:
         for dyad_id, ses, raw_a, raw_b in iter_dyads(root, dyad_map, 'drawing'):
