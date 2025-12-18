@@ -26,6 +26,39 @@ def load_study_config():
         return json.load(f)
 
 
+def get_input_path(config: dict, source_key: str) -> Path:
+    """
+    Constructs the full path to an INPUT folder.
+    Logic: PROJ_ROOT / InputRoot / SourceFolder
+    """
+    dirs = config.get("Directories", {})
+    sources = config.get("Sources", {})
+
+    input_root_name = dirs.get("InputRoot", "inputs")
+    source_folder_name = sources.get(source_key)
+
+    if not source_folder_name:
+        raise ValueError(f"Source key '{source_key}' not found in config 'Sources'.")
+
+    return PROJ_ROOT / input_root_name / source_folder_name
+
+def get_output_path(config: dict, dest_key: str) -> Path:
+    """
+    Constructs the full path to an OUTPUT folder.
+    Logic: PROJ_ROOT / OutputRoot / DestFolder
+    """
+    dirs = config.get("Directories", {})
+    dests = config.get("Destination", {})
+
+    output_root_name = dirs.get("OutputRoot", "outputs")
+    dest_folder_name = dests.get(dest_key)
+
+    if not dest_folder_name:
+        raise ValueError(f"Destination key '{dest_key}' not found in config 'Destination'.")
+
+    return PROJ_ROOT / output_root_name / dest_folder_name
+
+
 def resolve_path(path_str: str) -> Path:
     """
     Resolves file paths from the config JSON.
