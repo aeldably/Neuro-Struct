@@ -1,66 +1,27 @@
-import re
 import json
 import glob
+import shutil
 from pathlib import Path
-from typing import Tuple, Optional
+from typing import Optional, Dict, Any
+
 from mne_bids import make_dataset_description
 
+from src.filename_parser import FilenameParser
+from src import config as cfg
 
-def parse_filename(filename: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+# Create one shared instance
+_parser = FilenameParser()
+
+def parse_filename(filename: str):
     """
-    Extracts Subject, Session, and Run IDs from a filename.
-    Ensures EVERY file has a run number for consistency.
-
-    Logic:
-    1. 'session-a_1' -> ses-01, run-01
-    2. 'session-b_1' -> ses-01, run-02
-    3. 'ses-01'      -> ses-01, run-01 (Default)
+    This is the function NirsConverter calls.
+    It passes the work to your new class.
     """
+    return _parser.parse_all(filename)
 
-    # 1. SPECIAL CASE: Handle the "session-a" / "session-b" format
-    # Regex: session-([a-z]) matches the 'a' or 'b'
-    #        _(\d+)          matches the session number
-    split_match = re.search(r"session-([a-z])_(\d+)", filename, re.IGNORECASE)
-
-    if split_match:
-        # Extract Subject (standard regex)
-        sub_match = re.search(r"sub-?(\d+)", filename, re.IGNORECASE)
-        if not sub_match: return None, None, None
-
-        sub = sub_match.group(1)
-
-        # Extract Session (the number at the end)
-        raw_ses = split_match.group(2)
-        ses = f"{int(raw_ses):02d}"
-
-        # Extract Run (convert letter to number)
-        run_char = split_match.group(1).lower()
-        run_num = ord(run_char) - 96  # 'a'=1, 'b'=2
-        run = f"{run_num:02d}"
-
-        return sub, ses, run
-
-    # 2. STANDARD CASE: Standard BIDS format
-    sub_match = re.search(r"sub-?(\d+)", filename, re.IGNORECASE)
-    ses_match = re.search(r"(?:ses|session)-?(\d+)", filename, re.IGNORECASE)
-
-    if sub_match and ses_match:
-        sub = sub_match.group(1)
-        ses = f"{int(ses_match.group(1)):02d}"
-
-        # Check if an explicit run number already exists
-        run_match = re.search(r"run-?(\d+)", filename, re.IGNORECASE)
-
-        if run_match:
-            run = f"{int(run_match.group(1)):02d}"
-        else:
-            # FORCE CONSISTENCY: If no run is specified, default to '01'
-            run = "01"
-
-        return sub, ses, run
-
-    # If nothing matched
-    return None, None, None
+def parse_artwork_filename(filename: str) -> Optional[Dict[str, Any]]:
+    """Artwork wrapper (Used by ArtworksConverter)."""
+    return _parser.parse_artwork_string(filename)
 
 
 def patch_nirs_coords(bids_root: Path):
@@ -101,3 +62,60 @@ def generate_description(bids_root: Path, config: dict):
         overwrite=True,
         verbose=False
     )
+
+def run_inventory(study_config):
+    """
+    Job 1: Check if input folders exist.
+    Delegates to: src.config (or a dedicated utility if preferred,
+    but commonly kept here or in utils for simplicity).
+    """
+    print(f"\n{'=' * 50}")
+    print(f"🚀 PIPELINE INVENTORY CHECK")
+    print(f"{'=' * 50}")
+
+    sources = study_config.get("Sources", {})
+    for key, folder_name in sources.items():
+        try:
+            path = cfg.get_input_path(study_config, key)
+            status = "✅ Found" if path.exists() else "❌ Missing"
+            count = len(list(path.glob("*"))) if path.exists() else 0
+            print(f"📂 {key:<10} ({folder_name}): {status} ({count} items)")
+        except Exception:
+            print(f"⚠️ {key:<10} : Config Error")
+    print(f"{'-' * 50}\n")
+
+
+def perform_copy(source_path, target_dir, file_name, json_data=None):
+    """
+    Copies a file to a target directory and optionally creates a JSON sidecar file.
+
+    The function moves the specified file from the source path to the target
+    directory, creating the directory structure if necessary. If JSON data is
+    provided, a sidecar JSON file is created in the same target directory with
+    the same base name as the copied file.
+
+    Arguments:
+        source_path (Path): The path of the file to be copied.
+        target_dir (Path): The directory where the file will be copied.
+        file_name (str): The name of the file in the target directory.
+        json_data (Optional[dict]): JSON data to write to a sidecar file, if
+            provided.
+
+    Raises:
+        OSError: If an error occurs while creating directories, copying files,
+            or writing the sidecar JSON file.
+    """
+    # Prepare Target Directory
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target_path = target_dir / file_name
+
+    # Copy the File
+    shutil.copy2(source_path, target_path)
+
+    # Create Sidecar (optional)
+    if json_data:
+        json_name = Path(file_name).stem + ".json"
+        json_path = target_dir / json_name
+
+        with open(json_path, 'w') as f:
+            json.dump(json_data, f, indent=4)

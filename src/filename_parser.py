@@ -1,0 +1,119 @@
+import re
+from typing import Optional, Tuple, Any, Dict
+
+from src import loaders
+from src import config as cfg
+
+
+class FilenameParser:
+    """
+    Centralized parser for extracting metadata from filenames.
+    Separates Standard BIDS parsing (NIRS) from Artwork-specific parsing.
+    """
+
+    def __init__(self, dyad_map: Optional[Dict[str, str]] = None):
+        """
+        Args:
+            dyad_map: Optional dictionary mapping Subject ID -> Dyad ID.
+                      If None, loads automatically from config.
+        """
+        if dyad_map is None:
+            # Load automatically if not provided (convenience)
+            self.dyad_lookup = loaders.load_dyad_mapping(cfg.DYAD_FILE)
+        else:
+            # Dependency Injection (great for testing)
+            self.dyad_lookup = dyad_map
+
+    # Standard BIDS Parsing (Subject, Session, Run)
+
+    def parse_subject(self, filename: str) -> Optional[str]:
+        """Extracts the Subject ID (e.g., 'sub-01' -> '01')."""
+        match = re.search(r"sub-?(\d+)", filename, re.IGNORECASE)
+        if match:
+            return match.group(1).zfill(2)
+        return None
+
+    def parse_session(self, filename: str) -> Optional[str]:
+        """Extracts the Session ID (e.g., 'ses-01', 'session-1')."""
+        # Special Case: session-a_01 -> ses-01
+        special_match = re.search(r"session-[a-z]_(\d+)", filename, re.IGNORECASE)
+        if special_match:
+            return special_match.group(1).zfill(2)
+
+        # Standard Case: ses-01 or session-1 -> ses-01
+        standard_match = re.search(r"(?:ses|session)-?(\d+)", filename, re.IGNORECASE)
+        if standard_match:
+            return standard_match.group(1).zfill(2)
+        return None
+
+    def parse_run(self, filename: str) -> str:
+        """Extracts Run ID, defaulting to '01' if not found."""
+        # Explicit run-XX
+        run_match = re.search(r"run-?(\d+)", filename, re.IGNORECASE)
+        if run_match:
+            return f"{int(run_match.group(1)):02d}"
+
+        # Implicit mapping: session-a -> run 01, session-b -> run 02
+        special_match = re.search(r"session-([a-z])", filename, re.IGNORECASE)
+        if special_match:
+            char = special_match.group(1).lower()
+            run_num = ord(char) - 96  # 'a' is 97, so 97-96=1
+            return f"{run_num:02d}"
+
+        return "01"
+
+    def parse_common_components(self, filename: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+        """
+        Master method for Standard BIDS files (e.g. NIRS).
+        Returns: (sub, ses, run)
+        """
+        sub = self.parse_subject(filename)
+        ses = self.parse_session(filename)
+
+        if not sub or not ses:
+            return None, None, None
+
+        run = self.parse_run(filename)
+        return sub, ses, run
+
+    # Specialized Artwork Parsing
+
+    def parse_artwork_filename(self, filename: str) -> Optional[Dict[str, Any]]:
+        """
+        Parses specific naming conventions for Artwork (Dyad vs Solo).
+
+        Returns:
+            Dictionary with standardized keys: ['sub', 'dyad', 'ses', 'task', 'task_num']
+            or None if no match found.
+        """
+        # Strategy 1: DYAD CASE (dyad-1001-D1_session-1.tif)
+        # Note: D(\d+) captures only the digit (e.g., '1')
+        dyad_match = re.search(r"dyad-(\d+)-D(\d+)_session-(\d+)", filename, re.IGNORECASE)
+        if dyad_match:
+            return {
+                "sub": None,  # Dyads don't have a single subject
+                "dyad": dyad_match.group(1),  # 1001
+                "ses": dyad_match.group(3).zfill(2),  # 01
+                "task": "together",
+                "task_num": dyad_match.group(2)  # 1
+            }
+
+        # Strategy 2: SOLO CASE (sub-102-solo_session-1.tif)
+        solo_match = re.search(r"sub-(\d+)-solo_session-(\d+)", filename, re.IGNORECASE)
+        if solo_match:
+            sub_str = solo_match.group(1)
+
+            # Look up Dyad ID
+            # Strip zeros to match JSON keys (e.g., "01" -> "1")
+            lookup_key = str(int(sub_str))
+            dyad_id = self.dyad_lookup.get(lookup_key)
+
+            return {
+                "sub": sub_str.zfill(2),  # 01
+                "dyad": dyad_id,  # 1001 or None if missing
+                "ses": solo_match.group(2).zfill(2),  # 01
+                "task": "solo",
+                "task_num": None  # Solo tasks have no specific number
+            }
+
+        return None

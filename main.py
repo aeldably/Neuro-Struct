@@ -1,51 +1,56 @@
-
-
-from nirs_to_bids import run_nirs_conversion
+import logging
+import sys
 from src import config as cfg
+from src import jobs
 
 
-def run_inventory_check(study_config):
+# Setup Logging
+def setup_logging(log_file="pipeline.log"):
     """
-    Checks if all 'Source' folders defined in the JSON actually exist on disk.
+    Configures logging to write to both console (stdout) and a file.
     """
-    print(f"\n{'=' * 50}")
-    print(f"🚀 PIPELINE INVENTORY CHECK")
-    print(f"{'=' * 50}")
+    # Create a custom logger
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
 
-    for key, folder_name in study_config.get("Sources", {}).items():
-        try:
-            path = cfg.get_input_path(study_config, key)
-            status = "✅ Found" if path.exists() else "❌ Missing"
+    # File Handler (Writes to disk)
+    file_handler = logging.FileHandler(log_file, mode='w')  # 'w' overwrites each run, 'a' appends
+    file_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(file_format)
+    logger.addHandler(file_handler)
 
-            # Count items if the folder exists
-            count = len(list(path.glob("*"))) if path.exists() else 0
-            print(f"📂 {key:<15} ({folder_name}): {status} ({count} items)")
+    # Console Handler (Writes to screen)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_format = logging.Formatter('%(message)s')  # Keep the console clean
+    console_handler.setFormatter(console_format)
+    logger.addHandler(console_handler)
 
-        except Exception as e:
-            print(f"⚠️ {key:<15} : Config Error. {e}")
-
-    print(f"{'-' * 50}\n")
+    return logger
 
 
 def main():
     """
-    Master Pipeline Controller.
+    Entry point for the InterGenSynch BIDS Pipeline.
     """
+    logger = setup_logging()
+
+    logger.info("========================================")
+    logger.info("   🚀 NeuroStruct Pipeline")
+    logger.info("========================================")
+
     try:
+        # Load the Map
+        logger.info("📂 Loading configuration...")
         study_config = cfg.load_study_config()
+
+        # Execute the Jobs
+        jobs.run_artworks_job(study_config=study_config)
+
+        logger.info("\n✨ Pipeline finished successfully.")
+
     except Exception as e:
-        print(f"❌ {e}")
-        return
-
-    # Check Global Health
-    run_inventory_check(study_config)
-
-    # Run Modules
-    run_nirs_conversion(study_config)
-
-    # Future modules go here:
-    # run_behavior_conversion(study_config)
-    # run_mocap_conversion(study_config)
+        logger.error(f"❌ Critical Pipeline Failure: {e}", exc_info=True)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

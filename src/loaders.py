@@ -43,11 +43,24 @@ def load_demographics(csv_path: Path) -> Dict[str, dict]:
 
 def load_dyad_mapping(csv_path: Path) -> Dict[str, str]:
     """
-    Reads the dyad list and creates a flat mapping of Subject ID -> Dyad ID.
+    Loads a dyad mapping from a CSV file into a dictionary.
 
-    The input CSV usually has wide format (DyadID, PID1, PID2). This function
-    melts it into a long format so we can instantly look up which dyad a
-    specific subject belongs to (e.g., '101' -> '1001').
+    This function reads a CSV file containing dyad and participant identifiers,
+    normalizes the participant IDs by removing leading zeros, and maps each
+    participant ID to its corresponding dyad ID. It ensures data is converted
+    from a wide format to a long format before creating the mapping. If any
+    errors occur during the process, an empty dictionary is returned.
+
+    Parameters:
+    csv_path : Path
+        Path to the CSV file containing the dyad mapping. The file should have
+        at least three columns: 'dyadID', 'pID1', and 'pID2'.
+
+    Returns:
+    Dict[str, str]
+        A dictionary mapping participant IDs ('pID1' or 'pID2') to their
+        associated dyad ID ('dyadID'). If the CSV file doesn't exist or an
+        error occurs, an empty dictionary is returned.
     """
     if not csv_path.exists(): return {}
 
@@ -68,8 +81,19 @@ def load_dyad_mapping(csv_path: Path) -> Dict[str, str]:
 
 def load_dyad_grouping(csv_path: Path) -> Dict[str, list]:
     """
-    Returns a dictionary mapping Dyad ID to a list of Subject IDs.
-    Example: {'1001': ['101', '102'], '1002': ['103', '104']}
+    Loads and processes dyadic grouping information from a CSV file.
+
+    This function reads a CSV file containing dyadic IDs and participant IDs, processes the
+    data to normalize participant IDs, and organizes it into a dictionary. The resulting
+    dictionary maps each dyadic ID (dyadID) to a list of participant IDs.
+
+    Parameters:
+        csv_path (Path): The path to the CSV file containing the dyadic grouping data.
+
+    Returns:
+        Dict[str, list]: A dictionary where each key is a dyadID, and its value is a list of
+        normalized participant IDs associated with that dyad. If the file doesn't exist or an
+        error occurs during processing, an empty dictionary is returned.
     """
     if not csv_path.exists(): return {}
 
