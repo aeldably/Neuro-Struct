@@ -2,35 +2,46 @@ import json
 import glob
 import shutil
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple
 
 from mne_bids import make_dataset_description
 
+# Ensure the file is named filename_parser.py in src folder
 from src.filename_parser import FilenameParser
 from src import config as cfg
 
 # Create one shared instance
 _parser = FilenameParser()
 
-def parse_filename(filename: str):
+# --- Wrappers (API) ---
+
+def parse_filename(filename: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     """
-    This is the function NirsConverter calls.
-    It passes the work to your new class.
+    Used by NirsConverter.
+    Wraps parse_common_components to return (sub, ses, run).
     """
-    return _parser.parse_all(filename)
+    return _parser.parse_common_components(filename)
 
 def parse_artwork_filename(filename: str) -> Optional[Dict[str, Any]]:
-    """Artwork wrapper (Used by ArtworksConverter)."""
-    return _parser.parse_artwork_string(filename)
+    """
+    Used by ArtworksConverter.
+    Wraps parse_artwork_filename to return a dictionary of metadata.
+    """
+    # FIX: Changed from .parse_artwork_string() to .parse_artwork_filename()
+    return _parser.parse_artwork_filename(filename)
 
+def parse_coordinates_folder(folder_name: str) -> Optional[Dict[str, Any]]:
+    """
+    Used by Coordinate patching logic.
+    Wraps parse_coordinates_folder.
+    """
+    return _parser.parse_coordinates_folder(folder_name)
+
+# --- General Utilities ---
 
 def patch_nirs_coords(bids_root: Path):
     """
     Hot-fixes the missing 'NIRSCoordinateProcessingDescription' field in sidecar files.
-
-    MNE-BIDS doesn't write this field by default for raw data, which triggers a BIDS
-    validation warning. This function scans all generated JSONs and stamps "n/a"
-    to confirm that no coordinate manipulation was done.
     """
     files = glob.glob(str(bids_root / "**" / "*_coordsystem.json"), recursive=True)
 
@@ -38,20 +49,15 @@ def patch_nirs_coords(bids_root: Path):
         with open(file, 'r') as f:
             data = json.load(f)
 
-        # Only inject if the field is actually missing
         if "NIRSCoordinateProcessingDescription" not in data:
             data["NIRSCoordinateProcessingDescription"] = "n/a"
 
             with open(file, 'w') as f:
                 json.dump(data, f, indent=4)
 
-
 def generate_description(bids_root: Path, config: dict):
     """
     Writes the mandatory 'dataset_description.json' file to the BIDS root.
-
-    Uses values from the study_config.json to populate fields like Study Name,
-    Authors, and License. This ensures the fNIRSDataset top-level metadata is correct.
     """
     make_dataset_description(
         path=bids_root,
@@ -66,8 +72,6 @@ def generate_description(bids_root: Path, config: dict):
 def run_inventory(study_config):
     """
     Job 1: Check if input folders exist.
-    Delegates to: src.config (or a dedicated utility if preferred,
-    but commonly kept here or in utils for simplicity).
     """
     print(f"\n{'=' * 50}")
     print(f"🚀 PIPELINE INVENTORY CHECK")
@@ -84,26 +88,9 @@ def run_inventory(study_config):
             print(f"⚠️ {key:<10} : Config Error")
     print(f"{'-' * 50}\n")
 
-
 def perform_copy(source_path, target_dir, file_name, json_data=None):
     """
     Copies a file to a target directory and optionally creates a JSON sidecar file.
-
-    The function moves the specified file from the source path to the target
-    directory, creating the directory structure if necessary. If JSON data is
-    provided, a sidecar JSON file is created in the same target directory with
-    the same base name as the copied file.
-
-    Arguments:
-        source_path (Path): The path of the file to be copied.
-        target_dir (Path): The directory where the file will be copied.
-        file_name (str): The name of the file in the target directory.
-        json_data (Optional[dict]): JSON data to write to a sidecar file, if
-            provided.
-
-    Raises:
-        OSError: If an error occurs while creating directories, copying files,
-            or writing the sidecar JSON file.
     """
     # Prepare Target Directory
     target_dir.mkdir(parents=True, exist_ok=True)

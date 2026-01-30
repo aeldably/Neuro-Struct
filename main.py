@@ -30,7 +30,14 @@ def setup_logging(log_file="pipeline.log"):
 
 def main():
     """
-    Entry point for the InterGenSynch BIDS Pipeline.
+    Main function that serves as the entry point for the NeuroStruct pipeline.
+    It handles the initialization of logging, configuration loading, and execution
+    of predefined jobs. The function ensures the workflow completes successfully
+    or gracefully handles any critical failures.
+
+    Raises:
+        SystemExit: Exits the program with a status code of 1 in case of pipeline
+        failure due to an unhandled exception.
     """
     logger = setup_logging()
 
@@ -44,7 +51,7 @@ def main():
         study_config = cfg.load_study_config()
 
         # Execute the Jobs
-        jobs.run_artworks_job(study_config=study_config)
+        jobs.run_all(study_config=study_config)
 
         logger.info("\n✨ Pipeline finished successfully.")
 

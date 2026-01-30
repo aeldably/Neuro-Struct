@@ -18,13 +18,27 @@ class FilenameParser:
                       If None, loads automatically from config.
         """
         if dyad_map is None:
-            # Load automatically if not provided (convenience)
+            # Load automatically if not provided
             self.dyad_lookup = loaders.load_dyad_mapping(cfg.DYAD_FILE)
         else:
-            # Dependency Injection (great for testing)
+            # Dependency Injection
             self.dyad_lookup = dyad_map
 
-    # Standard BIDS Parsing (Subject, Session, Run)
+    # --- Helper Methods ---
+
+    def _get_dyad_for_sub(self, sub_id_str: str) -> Optional[str]:
+        """
+        Safely looks up Dyad ID for a given Subject ID string.
+        Handles padding differences (e.g., '01' vs '1') by normalizing to int-string.
+        """
+        try:
+            # Normalize "01" -> "1" to match JSON keys
+            lookup_key = str(int(sub_id_str))
+            return self.dyad_lookup.get(lookup_key)
+        except ValueError:
+            return None
+
+    # --- Standard BIDS Parsing (Subject, Session, Run) ---
 
     def parse_subject(self, filename: str) -> Optional[str]:
         """Extracts the Subject ID (e.g., 'sub-01' -> '01')."""
@@ -35,12 +49,12 @@ class FilenameParser:
 
     def parse_session(self, filename: str) -> Optional[str]:
         """Extracts the Session ID (e.g., 'ses-01', 'session-1')."""
-        # Special Case: session-a_01 -> ses-01
+        # 1. Special Case: session-a_01 -> ses-01
         special_match = re.search(r"session-[a-z]_(\d+)", filename, re.IGNORECASE)
         if special_match:
             return special_match.group(1).zfill(2)
 
-        # Standard Case: ses-01 or session-1 -> ses-01
+        # 2. Standard Case: ses-01 or session-1 -> ses-01
         standard_match = re.search(r"(?:ses|session)-?(\d+)", filename, re.IGNORECASE)
         if standard_match:
             return standard_match.group(1).zfill(2)
@@ -76,44 +90,55 @@ class FilenameParser:
         run = self.parse_run(filename)
         return sub, ses, run
 
-    # Specialized Artwork Parsing
+    # --- Specialized Parsing (Artworks & Coordinates) ---
 
     def parse_artwork_filename(self, filename: str) -> Optional[Dict[str, Any]]:
         """
         Parses specific naming conventions for Artwork (Dyad vs Solo).
-
-        Returns:
-            Dictionary with standardized keys: ['sub', 'dyad', 'ses', 'task', 'task_num']
-            or None if no match found.
+        Returns: Dict with keys ['sub', 'dyad', 'ses', 'task', 'task_num'] or None.
         """
         # Strategy 1: DYAD CASE (dyad-1001-D1_session-1.tif)
-        # Note: D(\d+) captures only the digit (e.g., '1')
         dyad_match = re.search(r"dyad-(\d+)-D(\d+)_session-(\d+)", filename, re.IGNORECASE)
         if dyad_match:
             return {
-                "sub": None,  # Dyads don't have a single subject
-                "dyad": dyad_match.group(1),  # 1001
-                "ses": dyad_match.group(3).zfill(2),  # 01
+                "sub": None,
+                "dyad": dyad_match.group(1),
+                "ses": dyad_match.group(3).zfill(2),
                 "task": "together",
-                "task_num": dyad_match.group(2)  # 1
+                "task_num": dyad_match.group(2)
             }
 
         # Strategy 2: SOLO CASE (sub-102-solo_session-1.tif)
         solo_match = re.search(r"sub-(\d+)-solo_session-(\d+)", filename, re.IGNORECASE)
         if solo_match:
             sub_str = solo_match.group(1)
-
-            # Look up Dyad ID
-            # Strip zeros to match JSON keys (e.g., "01" -> "1")
-            lookup_key = str(int(sub_str))
-            dyad_id = self.dyad_lookup.get(lookup_key)
+            dyad_id = self._get_dyad_for_sub(sub_str)  # Use helper
 
             return {
-                "sub": sub_str.zfill(2),  # 01
-                "dyad": dyad_id,  # 1001 or None if missing
-                "ses": solo_match.group(2).zfill(2),  # 01
+                "sub": sub_str.zfill(2),
+                "dyad": dyad_id,
+                "ses": solo_match.group(2).zfill(2),
                 "task": "solo",
-                "task_num": None  # Solo tasks have no specific number
+                "task_num": None
+            }
+
+        return None
+
+    def parse_coordinates_folder(self, folder_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Parses the coordinate folder name to extract subject and session.
+        Format: sub-101_session-1
+        """
+        match = re.search(r"^sub-(\d+)_session-(\d+)$", folder_name, re.IGNORECASE)
+
+        if match:
+            sub_str = match.group(1)
+            dyad_id = self._get_dyad_for_sub(sub_str)  # Use helper
+
+            return {
+                "sub": sub_str.zfill(2),
+                "ses": match.group(2).zfill(2),
+                "dyad": dyad_id
             }
 
         return None

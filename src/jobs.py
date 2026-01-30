@@ -1,3 +1,4 @@
+from src.converters.coordinates_converter import CoordinatesConverter
 from src.converters.nirs_converter import NirsConverter
 from src.converters.artworks_converter import ArtworksConverter
 from src.utils import run_inventory
@@ -26,12 +27,23 @@ def run_artworks_job(study_config):
     else:
         print("ℹ️  Skipping Artworks (Not configured)")
 
+def run_coordinates_job(study_config):
+    """
+    Job 4: Run Coordinates job.
+    """
+    if "Coord" in study_config.get("Sources", {}):
+        converter = CoordinatesConverter(study_config)
+        converter.run()
+    else:
+        print("ℹ️  Skipping Artworks (Not configured)")
+
 
 def run_all(study_config):
     """
     Master execution function.
     """
     run_inventory(study_config)
+    run_coordinates_job(study_config=study_config)
     # run_nirs_job(study_config)
-    run_artworks_job(study_config)
+    # run_artworks_job(study_config)
     # run_behavior_job(study_config)
