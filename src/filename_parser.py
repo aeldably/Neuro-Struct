@@ -92,7 +92,7 @@ class FilenameParser:
 
     # --- Specialized Parsing (Artworks & Coordinates) ---
 
-    def parse_artwork_filename(self, filename: str) -> Optional[Dict[str, Any]]:
+    def parse_artwork_file(self, filename: str) -> Optional[Dict[str, Any]]:
         """
         Parses specific naming conventions for Artwork (Dyad vs Solo).
         Returns: Dict with keys ['sub', 'dyad', 'ses', 'task', 'task_num'] or None.
@@ -139,6 +139,23 @@ class FilenameParser:
                 "sub": sub_str.zfill(2),
                 "ses": match.group(2).zfill(2),
                 "dyad": dyad_id
+            }
+
+        return None
+
+    def parse_mocap_file(self, filename: str) -> Optional[Dict[str, Any]]:
+        """
+        Parses MoCap filenames.
+        Format: dyad-1001_session-1_task-1_openPose-timeseries_unfiltered.csv
+        """
+        # Capture Dyad, Session, and Task Number
+        match = re.search(r"dyad-(\d+)_session-(\d+)_task-(\d+)_openPose", filename, re.IGNORECASE)
+
+        if match:
+            return {
+                "dyad": match.group(1),           # 1001
+                "ses": match.group(2).zfill(2),   # 1 -> 01
+                "task_num": match.group(3),       # 1
             }
 
         return None

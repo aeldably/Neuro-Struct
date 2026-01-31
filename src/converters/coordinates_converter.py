@@ -21,7 +21,7 @@ class CoordinatesConverter(BaseConverter):
         file_extensions: A list of patterns to locate subject folders (e.g., ["sub-*"]).
 
     Raises:
-        ValueError: Raised during metadata validation if required keys for the context
+        ValueError: Rises during metadata validation if required keys for the context
         are missing or invalid.
     """
 

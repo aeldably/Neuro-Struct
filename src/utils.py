@@ -27,8 +27,7 @@ def parse_artwork_filename(filename: str) -> Optional[Dict[str, Any]]:
     Used by ArtworksConverter.
     Wraps parse_artwork_filename to return a dictionary of metadata.
     """
-    # FIX: Changed from .parse_artwork_string() to .parse_artwork_filename()
-    return _parser.parse_artwork_filename(filename)
+    return _parser.parse_artwork_file(filename)
 
 def parse_coordinates_folder(folder_name: str) -> Optional[Dict[str, Any]]:
     """
@@ -37,7 +36,13 @@ def parse_coordinates_folder(folder_name: str) -> Optional[Dict[str, Any]]:
     """
     return _parser.parse_coordinates_folder(folder_name)
 
-# --- General Utilities ---
+def parse_mocap_file(filename: str) -> Optional[Dict[str, Any]]:
+    """
+    Used by MoCapConverter.
+    """
+    return _parser.parse_mocap_file(filename)
+
+# General Utilities
 
 def patch_nirs_coords(bids_root: Path):
     """
