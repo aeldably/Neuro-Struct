@@ -90,7 +90,6 @@ gen/
 
 # BIDS Sidecars 
 *.tsv
-*.json
 *.tsv
 *.tsv
 

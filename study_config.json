@@ -1,0 +1,35 @@
+{
+  "StudyName": "InterGenSynch",
+  "TaskName": "drawing",
+  "Directories": {
+    "InputRoot": "inputs",
+    "OutputRoot": "outputs"
+  },
+  "Sources": {
+    "NIRS": "fNIRSDataset",
+    "Beh": "RawBehaviour",
+    "Coord": "RawCoordinates",
+    "Art": "RawArtworks",
+    "MoCap": "RawMoCap",
+    "qual": "RawQualitative",
+    "Surv": "RawSelfReport"
+  },
+  "Destination": {
+    "NIRS": "BrainImaging",
+    "Coord": "Coordinates",
+    "Beh": "Behaviour",
+    "MoCap": "MoCap",
+    "Art": "Artworks",
+    "qual": "Qualitative",
+    "Surv": "SelfReport"
+  },
+  "Authors": ["Ryssa Moffat", "Emily S. Cross"],
+  "DataLicense": "Social Brain Sciences Lab, ETH Zurich",
+  "SourceDatasets": [
+    {
+      "URL": "{URL}",
+      "DOI": "10.xxxx",
+      "Version": "1.0"
+    }
+  ]
+}
