@@ -7,7 +7,7 @@ from src.utils import run_inventory
 
 def run_nirs_job(study_config):
     """
-    Job 2: Run NIRS Conversion.
+    Job 1: Run NIRS Conversion.
     Instantiates the Converter class and runs it.
     """
     if "NIRS" in study_config.get("Sources", {}):
@@ -19,7 +19,7 @@ def run_nirs_job(study_config):
 
 def run_artworks_job(study_config):
     """
-    Job 3: Run Artworks Conversion.
+    Job 2: Run Artworks Conversion.
     Checks if 'RawArtworks' is defined in the config source list.
     """
     if "Art" in study_config.get("Sources", {}):
@@ -30,7 +30,7 @@ def run_artworks_job(study_config):
 
 def run_coordinates_job(study_config):
     """
-    Job 4: Run Coordinates job.
+    Job 3: Run Coordinates job.
     """
     if "Coord" in study_config.get("Sources", {}):
         converter = CoordinatesConverter(study_config)
@@ -40,7 +40,7 @@ def run_coordinates_job(study_config):
 
 def run_mocap_job(study_config):
     """
-    Job 5: Run a Motion Capture job.
+    Job 4: Run a Motion Capture job.
     """
     if "Coord" in study_config.get("Sources", {}):
         converter = MoCapConverter(study_config)
