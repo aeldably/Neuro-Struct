@@ -46,6 +46,8 @@ class MoCapConverter(BaseConverter):
         dyad_id = info.get("dyad")
         ses_id  = info.get("ses")
         task_num = info.get("task_num")
+        run_id = info.get("run")
+        run_segment = f"run-{run_id}_" if run_id else ""
 
         # map task number to task name
         task_name = self.task_map.get(task_num)
@@ -63,6 +65,7 @@ class MoCapConverter(BaseConverter):
             f"ses-{ses_id}_"  # Session
             f"acq-dyad{dyad_id}_"  # dyad-id
             f"task-{task_name}_"  # Task Name
+            f"{run_segment}" # empty string when no letter suffix
             f"{suffix}"  # Suffix
         )
 

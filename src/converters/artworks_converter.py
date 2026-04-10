@@ -20,7 +20,7 @@ class ArtworksConverter(BaseConverter):
         # Parse Info
         info = utils.parse_artwork_filename(file_path.name)
         if not info:
-            # Silent skip for unrelated files, or log debug
+            self.log_error(file_path.name, "Invalid filename pattern")
             return False
 
         task_type = info.get('task')

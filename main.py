@@ -3,25 +3,43 @@ import sys
 from src import config as cfg
 from src import jobs
 
+import logging
+import sys
+import time
+from pathlib import Path
 
-# Setup Logging
-def setup_logging(log_file="pipeline.log"):
+
+def setup_logging(log_dir="logs"):  # Now takes a directory instead of a file
     """
-    Configures logging to write to both console (stdout) and a file.
+    Configures logging to write to both console and a unique, timestamped file.
     """
-    # Create a custom logger
+    # Force Windows console to understand UTF-8 (emojis)
+    if sys.stdout.encoding.lower() != 'utf-8':
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8')
+
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 
-    # File Handler (Writes to disk)
-    file_handler = logging.FileHandler(log_file, mode='w')  # 'w' overwrites each run, 'a' appends
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
+    # 1. Create a 'logs' folder if it doesn't exist
+    Path(log_dir).mkdir(parents=True, exist_ok=True)
+
+    # 2. Generate a unique filename based on the current time
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    log_file = Path(log_dir) / f"pipeline_{timestamp}.log"
+
+    # 3. Create the file handler (using 'w' is safe now, because the file is brand new!)
+    file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
     file_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(file_format)
     logger.addHandler(file_handler)
 
-    # Console Handler (Writes to screen)
+    # Console Handler
     console_handler = logging.StreamHandler(sys.stdout)
-    console_format = logging.Formatter('%(message)s')  # Keep the console clean
+    console_format = logging.Formatter('%(message)s')
     console_handler.setFormatter(console_format)
     logger.addHandler(console_handler)
 

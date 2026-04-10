@@ -146,16 +146,18 @@ class FilenameParser:
     def parse_mocap_file(self, filename: str) -> Optional[Dict[str, Any]]:
         """
         Parses MoCap filenames.
-        Format: dyad-1001_session-1_task-1_openPose-timeseries_unfiltered.csv
+        Format: dyad-1001_session-1_task-1_openPose-timeseries.csv
+        Also handles: dyad-1005_session-3a_task-1_openPose-timeseries.csv
         """
-        # Capture Dyad, Session, and Task Number
-        match = re.search(r"dyad-(\d+)_session-(\d+)_task-(\d+)_openPose", filename, re.IGNORECASE)
+        match = re.search(r"dyad-(\d+)_session-(\d+)([a-z]?)_task-(\d+)_openPose", filename, re.IGNORECASE)
 
         if match:
+            letter = match.group(3).lower()
             return {
-                "dyad": match.group(1),           # 1001
-                "ses": match.group(2).zfill(2),   # 1 -> 01
-                "task_num": match.group(3),       # 1
+                "dyad": match.group(1),
+                "ses": match.group(2).zfill(2),
+                "task_num": match.group(4),  # shifted from group(3)
+                "run": f"{ord(letter) - 96:02d}" if letter else None
             }
 
         return None

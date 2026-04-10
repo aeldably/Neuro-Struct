@@ -84,11 +84,17 @@ class BaseConverter(ABC):
     def _gather_files(self):
         """Finds all files matching the extensions (case-insensitive)."""
         files = []
+        filtered_files = []
         # Adds files matching extension to file list
         for ext in self.extensions:
             files.extend(list(self.source_dir.glob(ext)))
+            # Removes duplicates and excludes Mac metadata/system files
             files.extend(list(self.source_dir.glob(ext.upper())))
-        return sorted(list(set(files)))
+            filtered_files = [
+                f for f in set(files)
+                if not f.name.startswith("._") and not f.name.startswith(".DS_Store")
+            ]
+        return sorted(filtered_files)
 
     def _gather_folders(self):
         """
@@ -96,12 +102,14 @@ class BaseConverter(ABC):
         Useful when metadata is on the folder level (e.g. sub-01_ses-01).
         """
         folders = []
+        filtered_folders = []
         for pattern in self.extensions:
             # glob returns files AND folders, so we must filter with .is_dir()
             matches = self.source_dir.glob(pattern)
             folders.extend([p for p in matches if p.is_dir()])
-
-        return sorted(list(set(folders)))
+            # Ignore Mac metadata versions of folders
+            filtered_folders = [f for f in set(folders) if not f.name.startswith("._")]
+        return sorted(filtered_folders)
 
     def log_success(self, source, dest):
         tqdm.write(f"✅ {source:<30} -> {dest}")
@@ -128,30 +136,48 @@ class BaseConverter(ABC):
         # Hook: Pre-Run (Load metadata, etc.)
         self._pre_run_setup()
 
-        # Gather Files
-        files = self._gather_files()
-        if not files:
-            logger.info(f"ℹ️  [{self.input_key}] No files found in {self.source_dir}")
+        items_to_process = self._gather_files()
+
+        # Count everything in the folder to calculate the "Skipped" ones
+        all_items_in_folder = list(self.source_dir.iterdir())
+        total_items = len(all_items_in_folder)
+        skipped_count = len(all_items_in_folder) - len(items_to_process)
+        if not items_to_process:
+            logger.info(f"ℹ️  [{self.input_key}] No items found in {self.source_dir}")
             return
 
-        print(f"\n🚀 Starting {self.__class__.__name__} ({len(files)} files)")
+        print(f"\n🚀 Starting {self.__class__.__name__} ({len(items_to_process)} items)")
         print(f"   Source: {self.source_dir}")
 
         success_count = 0
         fail_count = 0
+        failed_filenames = list()
 
         # Execution Loop
-        for f in tqdm(files, desc=self.input_key, unit="file"):
+        for f in tqdm(items_to_process, desc=self.input_key, unit="file"):
             if self._process_single_file(f):
                 success_count += 1
             else:
                 fail_count += 1
+                failed_filenames.append(f.name)
 
-        # Hook: Post-Run (Cleanup, TSV generation)
+
+        # Post-Run (Cleanup, TSV generation)
         self._post_run_teardown()
 
         # Final Report
-        msg = f"✅ {self.input_key} Complete. Success: {success_count}, Failures: {fail_count}\n"
+        msg = (
+            f"\n📊 {self.input_key} Summary:\n"
+            f"   ✅ Success: {success_count}\n"
+            f"   ❌ Failures: {fail_count}\n"
+            f"   ⏭️  Skipped (Metadata/Junk): {skipped_count}\n"
+            f"   📂 Total Files Scanned: {total_items}\n"
+        )
+
+        # A trace list to track all failures
+        if failed_filenames:
+            msg += "\n🚨 TRACE: The following files failed:\n"
+            for filename in failed_filenames:
+                msg += f"   - {filename}\n"
         print("-" * 50)
-        print(msg)
         logger.info(msg)
