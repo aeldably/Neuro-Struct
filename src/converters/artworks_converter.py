@@ -26,7 +26,7 @@ class ArtworksConverter(BaseConverter):
         task_type = info.get('task')
 
         try:
-            # Determine Strategy
+            # Determine strategy
             if task_type == 'together':
                 dest_folder, new_name = self._prepare_together(info, file_path.suffix)
             elif task_type == 'solo':
@@ -35,7 +35,7 @@ class ArtworksConverter(BaseConverter):
                 self.log_error(file_path.name, f"Unknown task type: {task_type}")
                 return False
 
-            # Execute Copy
+            # Execute copy
             perform_copy(
                 source_path=file_path,
                 target_dir=dest_folder,

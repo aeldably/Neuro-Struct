@@ -11,7 +11,7 @@
     "Coord": "RawCoordinates",
     "Art": "RawArtworks",
     "MoCap": "RawMoCap",
-    "qual": "RawQualitative",
+    "qual": "RawQual",
     "Surv": "RawSelfReport"
   },
   "Destination": {
@@ -20,7 +20,7 @@
     "Beh": "Behaviour",
     "MoCap": "MoCap",
     "Art": "Artworks",
-    "qual": "Qualitative",
+    "qual": "Qual",
     "Surv": "SelfReport"
   },
   "Authors": ["Ryssa Moffat", "Emily S. Cross"],

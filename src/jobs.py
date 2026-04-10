@@ -1,3 +1,4 @@
+from src.converters.qual_converter import QualConverter
 from src.converters.mocap_converter import MoCapConverter
 from src.converters.coordinates_converter import CoordinatesConverter
 from src.converters.nirs_converter import NirsConverter
@@ -48,6 +49,16 @@ def run_mocap_job(study_config):
     else:
         print("ℹ️  Skipping Artworks (Not configured)")
 
+def run_qual_job(study_config):
+    """
+    Job 5: Run Qualitative Conversion.
+    """
+    if "qual" in study_config.get("Sources", {}):
+        converter = QualConverter(study_config)
+        converter.run()
+    else:
+        print("ℹ️  Skipping Qualitative (Not configured)")
+
 
 def run_all(study_config):
     """
@@ -58,4 +69,5 @@ def run_all(study_config):
     # run_nirs_job(study_config)
     # run_artworks_job(study_config)
     # run_behavior_job(study_config)
-    run_mocap_job(study_config=study_config)
+    # run_mocap_job(study_config=study_config)
+    run_qual_job(study_config=study_config)

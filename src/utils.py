@@ -13,7 +13,7 @@ from src import config as cfg
 # Create one shared instance
 _parser = FilenameParser()
 
-# --- Wrappers (API) ---
+# Wrappers (API)
 
 def parse_filename(filename: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     """
@@ -41,6 +41,13 @@ def parse_mocap_file(filename: str) -> Optional[Dict[str, Any]]:
     Used by MoCapConverter.
     """
     return _parser.parse_mocap_file(filename)
+
+def parse_qual_file(filename: str) -> Optional[Dict[str, Any]]:
+    """
+    Used by QualConverter.
+    """
+    return _parser.parse_qual_file(filename)
+
 
 # General Utilities
 

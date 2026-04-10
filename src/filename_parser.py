@@ -24,7 +24,7 @@ class FilenameParser:
             # Dependency Injection
             self.dyad_lookup = dyad_map
 
-    # --- Helper Methods ---
+    # Helper Methods
 
     def _get_dyad_for_sub(self, sub_id_str: str) -> Optional[str]:
         """
@@ -158,6 +158,25 @@ class FilenameParser:
                 "ses": match.group(2).zfill(2),
                 "task_num": match.group(4),  # shifted from group(3)
                 "run": f"{ord(letter) - 96:02d}" if letter else None
+            }
+
+        return None
+
+    def parse_qual_file(self, filename: str) -> Optional[Dict[str, Any]]:
+        """
+        Parses Qualitative filenames.
+        Format: 101.docx
+        """
+        match = re.search(r"^(\d+)\.docx$", filename, re.IGNORECASE)
+
+        if match:
+            sub_str = match.group(1)
+            dyad_id = self._get_dyad_for_sub(sub_str)
+
+            return {
+                "sub": sub_str.zfill(3),
+                "ses": "06",
+                "dyad": dyad_id
             }
 
         return None
