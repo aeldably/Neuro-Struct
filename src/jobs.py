@@ -65,9 +65,9 @@ def run_all(study_config):
     Master execution function.
     """
     run_inventory(study_config)
-    # run_coordinates_job(study_config=study_config)
+    run_coordinates_job(study_config=study_config)
     # run_nirs_job(study_config)
     # run_artworks_job(study_config)
     # run_behavior_job(study_config)
     # run_mocap_job(study_config=study_config)
-    run_qual_job(study_config=study_config)
+    # run_qual_job(study_config=study_config)

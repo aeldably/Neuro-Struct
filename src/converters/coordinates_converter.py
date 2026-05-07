@@ -71,12 +71,8 @@ class CoordinatesConverter(BaseConverter):
             # Source File (Dynamic based on folder name)
             # Target Suffix (Custom)
             f"{folder_path.name}.csv": "optodeCoordinates.csv",
-            f"{folder_path.name}_distances.csv": "channelLengths.csv",
-            f"{folder_path.name}_optode_dist.csv": "distancesToRoi.csv",
-
-            # (Optional)
-            # "opto.mat": "coordsystem.mat",
-            # "opto_MNI.mat": "coordsystem_MNI.mat"
+            f"{folder_path.name}_distances.csv": "distancesToRoi.csv",
+            f"{folder_path.name}_optode_dist.csv": "channelLengths.csv",
         }
 
         # Define Destination Directory
