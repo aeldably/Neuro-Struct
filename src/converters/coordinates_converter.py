@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Dict, List
 
+import pandas as pd
 from src.converters.base_converter import BaseConverter
 from src import utils
 from src.utils import perform_copy
@@ -36,6 +37,17 @@ class CoordinatesConverter(BaseConverter):
     def _gather_files(self) -> List[Path]:
         """Override the default behavior to look for FOLDERS, not files."""
         return self._gather_folders()
+
+    def _normalise_columns(self, file_path: Path):
+        """Lowercase all headers and rename to BIDS-consistent column names."""
+        COLUMN_MAP = {
+            "name": "channel",
+            "labeling": "channel",
+        }
+        df = pd.read_csv(file_path)
+        df.columns = df.columns.str.lower()
+        df.rename(columns=COLUMN_MAP, inplace=True)
+        df.to_csv(file_path, index=False)
 
     def _process_single_file(self, folder_path: Path) -> bool:
         """
@@ -94,6 +106,7 @@ class CoordinatesConverter(BaseConverter):
 
                 try:
                     perform_copy(source_file, dest_dir, new_name)
+                    self._normalise_columns(dest_dir / new_name)
                     success_any = True
                 except Exception as e:
                     self.log_error(f"{folder_path.name}/{src_name}", e)

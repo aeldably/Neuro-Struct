@@ -7,6 +7,7 @@
   },
   "Sources": {
     "NIRS": "fNIRSDataset",
+    "BIDS": "BrainImaging",
     "Beh": "RawBehaviour",
     "Coord": "RawCoordinates",
     "Art": "RawArtworks",
@@ -16,6 +17,7 @@
   },
   "Destination": {
     "NIRS": "BrainImaging",
+    "BIDS": "final_bids",
     "Coord": "Coordinates",
     "Beh": "Behaviour",
     "MoCap": "MoCap",

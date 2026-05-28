@@ -48,7 +48,6 @@ def parse_qual_file(filename: str) -> Optional[Dict[str, Any]]:
     """
     return _parser.parse_qual_file(filename)
 
-
 # General Utilities
 
 def patch_nirs_coords(bids_root: Path):
@@ -118,3 +117,5 @@ def perform_copy(source_path, target_dir, file_name, json_data=None):
 
         with open(json_path, 'w') as f:
             json.dump(json_data, f, indent=4)
+
+

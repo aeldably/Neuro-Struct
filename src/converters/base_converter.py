@@ -76,7 +76,7 @@ class BaseConverter(ABC):
         if not self.source_dir:
             return False
         if not self.source_dir.exists():
-            print(f"⚠️ Source folder not found: {self.source_dir}")
+            logger.warning(f"⚠️ Source folder not found: {self.source_dir}")
             return False
         self.output_root.mkdir(parents=True, exist_ok=True)
         return True
@@ -126,34 +126,27 @@ class BaseConverter(ABC):
             raise ValueError(f"Missing {missing} for {context}")
 
     def run(self):
-        """
-        The Template Method: Defines the strict skeleton of the conversion process.
-        """
-        # Validation
         if not self._validate_paths():
             return
 
-        # Hook: Pre-Run (Load metadata, etc.)
         self._pre_run_setup()
 
         items_to_process = self._gather_files()
 
-        # Count everything in the folder to calculate the "Skipped" ones
-        all_items_in_folder = list(self.source_dir.iterdir())
-        total_items = len(all_items_in_folder)
-        skipped_count = len(all_items_in_folder) - len(items_to_process)
+        total_items = len(items_to_process)
+        skipped_count = max(0, len(list(self.source_dir.iterdir())) - total_items)
+
         if not items_to_process:
             logger.info(f"ℹ️  [{self.input_key}] No items found in {self.source_dir}")
             return
 
-        print(f"\n🚀 Starting {self.__class__.__name__} ({len(items_to_process)} items)")
-        print(f"   Source: {self.source_dir}")
+        logger.info(f"🚀 Starting {self.__class__.__name__} ({total_items} items)")
+        logger.info(f"   Source: {self.source_dir}")
 
         success_count = 0
         fail_count = 0
-        failed_filenames = list()
+        failed_filenames = []
 
-        # Execution Loop
         for f in tqdm(items_to_process, desc=self.input_key, unit="file"):
             if self._process_single_file(f):
                 success_count += 1
@@ -161,11 +154,8 @@ class BaseConverter(ABC):
                 fail_count += 1
                 failed_filenames.append(f.name)
 
-
-        # Post-Run (Cleanup, TSV generation)
         self._post_run_teardown()
 
-        # Final Report
         msg = (
             f"\n📊 {self.input_key} Summary:\n"
             f"   ✅ Success: {success_count}\n"
@@ -174,10 +164,10 @@ class BaseConverter(ABC):
             f"   📂 Total Files Scanned: {total_items}\n"
         )
 
-        # A trace list to track all failures
         if failed_filenames:
             msg += "\n🚨 TRACE: The following files failed:\n"
             for filename in failed_filenames:
                 msg += f"   - {filename}\n"
-        print("-" * 50)
-        logger.info(msg)
+
+        tqdm.write("-" * 50)  # console only — keeps tqdm clean
+        logger.info(msg)  # console + log file

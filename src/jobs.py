@@ -1,3 +1,4 @@
+from src.converters.bad_channel_converter import BadChannelConverter
 from src.converters.qual_converter import QualConverter
 from src.converters.mocap_converter import MoCapConverter
 from src.converters.coordinates_converter import CoordinatesConverter
@@ -59,15 +60,27 @@ def run_qual_job(study_config):
     else:
         print("ℹ️  Skipping Qualitative (Not configured)")
 
+def run_channel_patcher_job(study_config):
+    """
+    Job: Patch channels.tsv files based on visual inspection exclusion list.
+    Runs AFTER the NIRS converter.
+    """
+    if "NIRS" in study_config.get("Sources", {}):
+        patcher = BadChannelConverter(study_config)
+        patcher.run()
+    else:
+        print("ℹ️  Skipping Channel Patcher (NIRS not configured)")
+
 
 def run_all(study_config):
     """
     Master execution function.
     """
     run_inventory(study_config)
-    run_coordinates_job(study_config=study_config)
     # run_nirs_job(study_config)
+    run_coordinates_job(study_config=study_config)
     # run_artworks_job(study_config)
     # run_behavior_job(study_config)
     # run_mocap_job(study_config=study_config)
     # run_qual_job(study_config=study_config)
+    # run_channel_patcher_job(study_config=study_config)
