@@ -4,6 +4,7 @@ from src.converters.mocap_converter import MoCapConverter
 from src.converters.coordinates_converter import CoordinatesConverter
 from src.converters.nirs_converter import NirsConverter
 from src.converters.artworks_converter import ArtworksConverter
+from src.converters.dyad_list_converter import DyadListConverter
 from src.utils import run_inventory
 
 
@@ -71,14 +72,26 @@ def run_channel_patcher_job(study_config):
     else:
         print("ℹ️  Skipping Channel Patcher (NIRS not configured)")
 
+def run_dyad_list_job(study_config):
+    """
+    Job: Convert dyadlist.csv to BIDS-inspired JSON files.
+    Produces dyadlist.json and dyadlist.meta.json in outputs/DyadList/.
+    """
+    if "Dyad" in study_config.get("Sources", {}):
+        converter = DyadListConverter(study_config)
+        converter.run()
+    else:
+        print("ℹ️  Skipping DyadList (Not configured)")
+
 
 def run_all(study_config):
     """
     Master execution function.
     """
     run_inventory(study_config)
+    run_dyad_list_job(study_config)
     # run_nirs_job(study_config)
-    run_coordinates_job(study_config=study_config)
+    # run_coordinates_job(study_config=study_config)
     # run_artworks_job(study_config)
     # run_behavior_job(study_config)
     # run_mocap_job(study_config=study_config)
