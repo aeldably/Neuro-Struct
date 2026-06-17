@@ -1,4 +1,5 @@
 from src.converters.bad_channel_converter import BadChannelConverter
+from src.converters.docx_to_text_converter import DocxToTxtConverter
 from src.converters.qual_converter import QualConverter
 from src.converters.mocap_converter import MoCapConverter
 from src.converters.coordinates_converter import CoordinatesConverter
@@ -83,12 +84,20 @@ def run_dyad_list_job(study_config):
     else:
         print("ℹ️  Skipping DyadList (Not configured)")
 
+def run_docx_to_txt_job(study_config):
+    if "QualTxt" in study_config.get("Destination", {}):
+        converter = DocxToTxtConverter(study_config)
+        converter.run()
+    else:
+        print("ℹ️  Skipping DocxToTxt (Not configured)")
+
 
 def run_all(study_config):
     """
     Master execution function.
     """
     run_inventory(study_config)
+    run_docx_to_txt_job(study_config)
     run_dyad_list_job(study_config)
     # run_nirs_job(study_config)
     # run_coordinates_job(study_config=study_config)

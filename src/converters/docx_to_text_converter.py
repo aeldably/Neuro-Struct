@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Dict
 
 from src.converters.base_converter import BaseConverter
+from src import config as cfg
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +25,11 @@ class DocxToTxtConverter(BaseConverter):
         super().__init__(
             study_config=study_config,
             input_key="QualTxt",
-            output_key="QualTxtOut",
+            output_key="QualTxt",
             file_extensions=["*.docx"]
         )
         # Source is in outputs/, not inputs/ — override source_dir
-        self.source_dir = self.output_root.parent / "exit_interviews"
+        self.source_dir = cfg.get_output_path(study_config, "QualTxt")
 
     # Core
 

@@ -14,7 +14,8 @@
     "MoCap": "RawMoCap",
     "qual": "RawQual",
     "Surv": "RawSelfReport",
-    "Dyad": "RawDyadList"
+    "Dyad": "RawDyadList",
+    "QualTxt": "Qual/exit_interviews"
   },
   "Destination": {
     "NIRS": "BrainImaging",
@@ -25,7 +26,9 @@
     "Art": "Artworks",
     "qual": "Qual",
     "Surv": "SelfReport",
-    "Dyad": "DyadList"
+    "Dyad": "DyadList",
+    "QualTxtOut": "Qual/exit_interviews_txt",
+    "QualTxt": "Qual/exit_interviews"
   },
   "Authors": ["Ryssa Moffat", "Emily S. Cross"],
   "DataLicense": "Social Brain Sciences Lab, ETH Zurich",
